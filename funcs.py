@@ -1,4 +1,5 @@
 import sys
+import pyaudio
 import wave
 import struct
 import numpy as np
@@ -28,7 +29,6 @@ def parse_hn(file_path):
 # Input: path of .wav audio file
 # Output: numpy array of audio data values (only left channel if .wav has more than 1 channel)
 def input_audio(file_path):
-    # audio_data = np.array([])
     audio_data = []
 
     wave_file = wave.open(file_path, 'r')
@@ -41,7 +41,7 @@ def input_audio(file_path):
 
     wave_file.close()
 
-    return audio_data
+    return np.array(audio_data)
 
 
 # Input:
@@ -49,8 +49,8 @@ def input_audio(file_path):
 #   hn: impulse response sequence
 # Output: filtered sequence
 def filter_data(xn, hn):
-    yn = np.convolve(xn, hn, mode='valid')
-    return yn
+    yn = np.convolve(xn, hn) #, mode='valid')
+    return yn.astype(int)
 
 
 # Input: xn: data sequence to take short time fourier transform of
@@ -70,21 +70,49 @@ def do_stft(xn, fs):
 
     return Zxx
 
+# Input: 2D spectrogram data
+# Output: 1D signal power at each time step
 def stft2sigpower(s):
     sig_power = np.sum(np.abs(s),0)
     return sig_power
 
 # Input: array of signal powers over time
 # Output: peak values in sig_power and locations as indices
-def findpeaks(sig_power):
+def findpeaks(signal, thres=0.2, min_dist=1):
     peaks = np.array([])
     peak_idx = np.array([])
 
-    peak_idx = indexes(sig_power, thres=7.0/max(sig_power), min_dist=2)
-    #peak_idx = signal.find_peaks_cwt(sig_power, np.arange(1,4), noise_perc=2)
-    peaks = np.array([sig_power[idx] for idx in peak_idx])
+    peak_idx = indexes(signal, thres=thres, min_dist=min_dist)
+    peaks = np.array([signal[idx] for idx in peak_idx])
     return peaks, peak_idx
 
+class SmoothSeq():
+    def __init__(self):
+        self.win_len = 5000
+
+        self.summed = 0
+        self.buffer = np.zeros(self.win_len)
+
+    # signal: sequence of values to smooth
+    def smooth(self, signal):
+        smoothed = []
+
+        for i in range(0, self.win_len):
+            self.summed = self.summed + signal[i] - self.buffer[i]
+            smoothed.append(self.summed)
+        for i in range(self.win_len, len(signal)):
+            self.summed = self.summed + signal[i] - signal[i - self.win_len]
+            smoothed.append(self.summed)
+
+        self.buffer = signal[-self.win_len:]
+        return np.array(smoothed) / self.win_len
+
+
+    def normalize(self, signal):
+        norm = np.linalg.norm(signal)
+        if norm == 0:
+            return signal
+        return signal / norm
 
 #if __name__ == "__main__":
 #    main(sys.argv)

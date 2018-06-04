@@ -33,7 +33,6 @@ num_of_f_points = fsample / 2;
 num_of_n_points = M;
 [poles,zeros,HF,Fd,hn,n,figure_num] = show_filter_responses(Ak,Bk,fsample,num_of_f_points,num_of_n_points,figure_num);
 csvwrite('hn.csv',hn)
-
 % Filter the audio to remove low freq noise ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Y_left = Y(1:end,1);
 Y_right = Y(1:end,2);
@@ -119,24 +118,23 @@ heart_bpm = heart_freq * 60
 
 % No STFT ~~~~~~~~~~~
 % Find peaks in the waveform
-
-t = 0:1/fsample:(length(Y_left_filtered)-1)/fsample;
-env = envelope(Y_left_filtered,150,'analytic');
+t = 0:1/fsample:length(Y_left_filtered)/fsample;
+env = envelope(Y_left_filtered,300);
 [peaks, location] = findpeaks(env, 'MinPeakProminence', 0.01);
 
 % Plot the signal power over time
 figure(figure_num)
 figure_num = figure_num + 1;
-% plot(t,Y_left_filtered)
-% hold on;
-plot(t,env)
+plot(Y_left_filtered)
+hold on;
+plot(env)
 xlabel('Time (s)');
 ylabel('Signal Power dB/Hz');
 title('Signal Power vs Time');
 
 % Overlay the scatterplot of peaks
 hold on;
-% scatter((location-1) / fsample, peaks);
+scatter((location-1) * win_len, peaks);
 
 % Calculate frequency
 num_peaks = size(peaks,2);
