@@ -8,7 +8,7 @@ figure_num = 1;
 
 % Optimal FIR design ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 % Config parameters
-As = 60; % dB
+As = 80; % dB
 Ap = 0.5; % dB
 
 % Calculate passband ripple and stopband attenuation
@@ -16,7 +16,7 @@ delta_s = 10^(-As/20);
 delta_p = (10^(Ap/20)-1)/(10^(Ap/20)+1);
 
 % Parameters for optimal filter design
-F = [3500 4000 6000 6500];
+F = [3000 4000 6000 7000];
 A = [0 1 0];
 DEV = [delta_s delta_p delta_s];
 [N,Fo,Ao,W] = firpmord(F,A,DEV,fsample)

@@ -32,12 +32,21 @@ def input_audio(file_path):
     audio_data = []
 
     wave_file = wave.open(file_path, 'r')
+    wave_samplewidth = wave_file.getsampwidth()
+    wave_chs = wave_file.getnchannels()
     num_frames = wave_file.getnframes()
 
     for index in range(num_frames):
         wave_data = wave_file.readframes(1)
-        data = struct.unpack("<h", wave_data)
-        audio_data.append(float(data[0]))
+
+        # Mono
+        if (wave_chs == 1):
+            data = struct.unpack("<h", wave_data)
+        # Stereo
+        elif (wave_chs == 2):
+            data = struct.unpack("<hh", wave_data)
+
+        audio_data.append(data[0])
 
     wave_file.close()
 
@@ -55,13 +64,13 @@ def filter_data(xn, hn):
 
 # Input: xn: data sequence to take short time fourier transform of
 # Output: stft result
-def do_stft(xn, fs):
-    nperseg = 4096;
-    noverlap = 0;
-    nfft = nperseg;
+def do_stft(xn, fs, nperseg):
+    noverlap = 0
+    nfft = 512  #nperseg;
 
     s = np.array([])
     f, t, Zxx = signal.stft(xn, fs, nperseg=nperseg, noverlap=noverlap, nfft=nfft)
+
 #    plt.pcolormesh(t, f, np.abs(Zxx), vmin=0) #, vmax=amp)
 #    plt.title('STFT Magnitude')
 #    plt.ylabel('Frequency [Hz]')
