@@ -95,6 +95,15 @@ def findpeaks(signal, thres=0.2, min_dist=1):
     peaks = np.array([signal[idx] for idx in peak_idx])
     return peaks, peak_idx
 
+# Encodes a value into an array of 5 LEDs
+def encodeVal(val):
+    LED_array = [1 if ((val > 105 + 20*i) and (val <= 135 + 20*i)) else 0 for i in range(0,5)]
+    if (val < 115):
+        LED_array[0] = -1
+    elif (val > 205):
+        LED_array[4] = -1
+    return LED_array
+
 class SmoothSeq():
     def __init__(self):
         self.win_len = 5000

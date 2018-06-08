@@ -33,9 +33,9 @@ class FHM():
         self.smoother = SmoothSeq()
 
         # Track heart rate
-        self.beat_time_delta = RunningStat(10)
-        self.thresh_low = 120
-        self.thresh_high = 180
+        self.beat_time_delta = RunningStat(5)
+        self.thresh_low = 100
+        self.thresh_high = 220
         self.stdDev_limit = 50
         self.running_win = 5
         self.heart_rate = RunningStat(self.running_win)
@@ -61,7 +61,7 @@ class FHM():
                 (heart_rate < self.thresh_high) and
                 (stdDev < self.stdDev_limit)):
                 self.heart_rate.push(heart_rate)
-                print("Heartrate: %0.1f bpm | Inst: %0.1f" % (self.heart_rate.mean(), heart_rate))
+                print("Heartrate: %0.1f bpm | Inst: %0.1f" % (self.heart_rate.winMean(), heart_rate))
                 print("Std. dev: %0.1f bpm\n" % self.heart_rate.winStdDev())
             else:
                 print("Out of bounds: %0.1f bpm. Std dev: %0.1f bpm.\n" % (heart_rate, stdDev))
@@ -167,25 +167,31 @@ class FHM():
 
         # Calculate frequency
         heart_rate = 60 / (mean * nperseg / self.rate)
-        print("Heart rate: %0.1f bpm | Std dev: %0.1f bpm.\n" % (heart_rate, stdDev))
+#        print("Heart rate: %0.1f bpm | Std dev: %0.1f bpm.\n" % (heart_rate, stdDev))
 
         end = timer()
 #        print("Processing time: %f" % (end-start))
 
         #Plot everything
-        fig = plt.figure()
-        ax1 = fig.add_subplot(111)
-        ax1.plot(sigpwr)
-        ax1.scatter(peaks_idx, peaks)
-        plt.title('Signal Power vs. Time')
-        plt.ylabel('Signal Power')
-        plt.xlabel('Time [sec]')
-        plt.show()
+#        fig = plt.figure()
+#        ax1 = fig.add_subplot(111)
+#        ax1.plot(sigpwr)
+#        ax1.scatter(peaks_idx, peaks)
+#        plt.title('Signal Power vs. Time')
+#        plt.ylabel('Signal Power')
+#        plt.xlabel('Time [sec]')
+#        plt.show()
 
         return heart_rate, stdDev
 
 if __name__ == "__main__":
-    simulate = True
+    for i in range (110, 210):
+        LED_array = encodeVal(i)
+        print("%d: " % i),
+        print(LED_array)
+
+    quit()
+    simulate = False
 
     monitor = FHM()
 
