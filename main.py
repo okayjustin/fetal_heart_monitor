@@ -33,7 +33,7 @@ class FHM():
 #                if (self.p.get_device_info_by_host_api_device_index(0, i).get('maxOutputChannels')) > 0:
 #                    print "Output Device id ", i, " - ", self.p.get_device_info_by_host_api_device_index(0, i).get('name')
         self.format = pyaudio.paInt16
-        self.rate = 44100
+        self.rate = 16000 #44100
         self.chunk = int(self.rate * self.measwindow)
         self.meas_time = float(self.chunk) / self.rate
 
@@ -100,7 +100,7 @@ class FHM():
 
     def sysRec(self):
         wav_path = './temp.wav'
-        os.system('arecord %s -f S16_LE -d %d' % (wav_path, self.measwindow))
+        os.system('arecord %s -f S16_LE -r %d -d %d' % (wav_path, self.rate, self.measwindow))
         return wav_path
 
     def _prepare_file(self, fname, mode='wb'):
