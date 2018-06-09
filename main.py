@@ -1,11 +1,15 @@
 from funcs import *
 from recorder import *
 import numpy as np
-import matplotlib.pyplot as plt
+import mute_alsa
 import pyaudio
 import time
 from timeit import default_timer as timer
 from helper_funcs import *
+import sys
+
+SIMULATE = False
+PLOT = False
 
 # Fetal heart monitor
 class FHM():
@@ -19,6 +23,11 @@ class FHM():
 
         # Recording setup
         self.p = pyaudio.PyAudio()
+        info = self.p.get_host_api_info_by_index(0)
+        numdevices = info.get('deviceCount')
+        for i in range(0, numdevices):
+                if (self.p.get_device_info_by_host_api_device_index(0, i).get('maxInputChannels')) > 0:
+                    print "Input Device id ", i, " - ", self.p.get_device_info_by_host_api_device_index(0, i).get('name')
         self.format = pyaudio.paInt16
         self.rate = 44100
         self.chunk = int(self.rate * self.measwindow)
@@ -30,9 +39,10 @@ class FHM():
         self.channels = 1
 
         # Init smoother
-        self.smoother = SmoothSeq()
+#        self.smoother = SmoothSeq()
 
         # Track heart rate
+        self.firstMeas = True
         self.beat_time_delta = RunningStat(5)
         self.thresh_low = 100
         self.thresh_high = 220
@@ -47,25 +57,18 @@ class FHM():
                         channels= self.channels,
                         rate=self.rate,
                         input=True,
+                        output=False,
+                        input_device_index=2,
                         frames_per_buffer=self.chunk,
                         stream_callback=self.get_callback())
 
-        self.stream.start_stream()
+#        self.stream.start_stream()
 
     def get_callback(self):
         def callback(in_data, frame_count, time_info, status):
             start_time = timer()
             audio_data = np.fromstring(in_data, dtype=np.int16)
-            heart_rate, stdDev = self.processAudio(audio_data)
-            if ((heart_rate > self.thresh_low) and
-                (heart_rate < self.thresh_high) and
-                (stdDev < self.stdDev_limit)):
-                self.heart_rate.push(heart_rate)
-                print("Heartrate: %0.1f bpm | Inst: %0.1f" % (self.heart_rate.winMean(), heart_rate))
-                print("Std. dev: %0.1f bpm\n" % self.heart_rate.winStdDev())
-            else:
-                print("Out of bounds: %0.1f bpm. Std dev: %0.1f bpm.\n" % (heart_rate, stdDev))
-
+            self.assessHR(audio_data)
             self.wavefile.writeframes(in_data)
             end_time = timer()
 #            print("Callback %0.1f ms" % ((end_time - start_time)*1000))
@@ -85,6 +88,29 @@ class FHM():
         wavefile.setsampwidth(self.p.get_sample_size(pyaudio.paInt16))
         wavefile.setframerate(self.rate)
         return wavefile
+
+    # Determines heart rate then sets LEDs accordingly
+    def assessHR(self, audio_data):
+        # Determine heart rate
+        heart_rate, stdDev = self.processAudio(audio_data)
+
+        # Check rate against thresholds to determine validity
+        if ((heart_rate > self.thresh_low) and
+            (heart_rate < self.thresh_high) and
+            (stdDev < self.stdDev_limit)):
+
+            # If this is the first meas, push multiple times to fill RunningStat
+            if (self.firstMeas):
+                self.firstMeas = False
+                for _ in range(0, self.running_win):
+                    self.heart_rate.push(heart_rate)
+            else:
+                self.heart_rate.push(heart_rate)
+
+            print("Heartrate: %0.1f bpm | Inst: %0.1f" % (self.heart_rate.winMean(), heart_rate))
+            print("Std. dev: %0.1f bpm\n" % self.heart_rate.winStdDev())
+        else:
+            print("Out of bounds: %0.1f bpm. Std dev: %0.1f bpm.\n" % (heart_rate, stdDev))
 
     # Moving average strategy for detecting heart rate
     def processAudioMA(self, audio_data):
@@ -166,7 +192,10 @@ class FHM():
         stdDev = self.beat_time_delta.stdDev()
 
         # Calculate frequency
-        heart_rate = 60 / (mean * nperseg / self.rate)
+        if (mean != 0):
+            heart_rate = 60 / (mean * nperseg / self.rate)
+        else:
+            heart_rate = 0
 #        print("Heart rate: %0.1f bpm | Std dev: %0.1f bpm.\n" % (heart_rate, stdDev))
 
         end = timer()
@@ -185,30 +214,34 @@ class FHM():
         return heart_rate, stdDev
 
 if __name__ == "__main__":
-    for i in range (110, 210):
-        LED_array = encodeVal(i)
-        print("%d: " % i),
-        print(LED_array)
+    print("Fetal Heart Rate Monitor v0.1")
 
-    quit()
-    simulate = False
+    if (PLOT):
+        import matplotlib.pyplot as plt
+
+#    for i in range (110, 210):
+#        LED_array = encodeVal(i)
+#        print("%d: " % i),
+#        print(LED_array)
 
     monitor = FHM()
 
-    if (simulate):
+    if (SIMULATE):
         # Import audio data
         wav_path = './fetal_heart.wav'
+        print("Importing audio... "),
+        sys.stdout.flush()
         audio_data = input_audio(wav_path)
+        print("Done.")
 
         # Pretend to stream data
         for i in range(0, len(audio_data) / monitor.chunk):
             audio_data_segment = audio_data[monitor.chunk * i:monitor.chunk * (i+1)-1]
-            heart_rate, stdDev = monitor.processAudio(audio_data_segment)
-            print("%0.1f bpm. Std dev: %0.1f bpm.\n" % (heart_rate, stdDev))
+            monitor.assessHR(audio_data_segment)
     else:
         # Record until quit
         try:
-            print("Starting recording")
+            print("Starting recording... ")
             monitor.start_recording()
             while(True):
                 pass

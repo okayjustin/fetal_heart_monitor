@@ -4,8 +4,12 @@ import wave
 import struct
 import numpy as np
 from scipy import signal
-import matplotlib.pyplot as plt
 from peakutils.peak import indexes
+
+PLOT = False
+
+if (PLOT):
+    import matplotlib.pyplot as plt
 
 #def main(argv):
 #    audio_data = input_audio(argv[1])
