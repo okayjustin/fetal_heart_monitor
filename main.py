@@ -68,8 +68,13 @@ class FHM():
         def callback(in_data, frame_count, time_info, status):
             start_time = timer()
             audio_data = np.fromstring(in_data, dtype=np.int16)
-            self.assessHR(audio_data)
+#            self.assessHR(audio_data)
+
+            print("Writing to file..."),
+            sys.stdout.flush()
             self.wavefile.writeframes(in_data)
+            print("Done.")
+
             end_time = timer()
 #            print("Callback %0.1f ms" % ((end_time - start_time)*1000))
             return in_data, pyaudio.paContinue
