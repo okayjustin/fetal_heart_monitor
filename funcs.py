@@ -3,8 +3,10 @@ import pyaudio
 import wave
 import struct
 import numpy as np
+import RPi.GPIO as GPIO
 from scipy import signal
 from peakutils.peak import indexes
+
 
 PLOT = False
 
@@ -107,6 +109,23 @@ def encodeVal(val):
     elif (val > 205):
         LED_array[4] = -1
     return LED_array
+
+PIN_NUMS = [7,11,13,15,16]
+
+# Initialize RPi GPIO
+def initGPIO():
+    GPIO.setmode(GPIO.BOARD)
+    for pin in PIN_NUMS:
+        GPIO.setup(pin, GPIO.OUT)
+    for i in range(0, len(PIN_NUMS)):
+        GPIO.output(pin, GPIO.HIGH)
+
+# Set LEDs to display a value
+def display(val):
+    LED_array = encodeVal(val)
+    for i in range(0, len(PIN_NUMS)):
+        GPIO.output(pin, GPIO.LOW if LED_array[i] else GPIO.HIGH)
+
 
 class SmoothSeq():
     def __init__(self):

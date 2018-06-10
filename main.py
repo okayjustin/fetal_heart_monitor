@@ -9,9 +9,9 @@ from helper_funcs import *
 import sys, os
 import subprocess
 
-SIMULATE = True
+SIMULATE = False
 SYSTEM_REC = True
-PLOT = True
+PLOT = False
 
 # Fetal heart monitor
 class FHM():
@@ -64,6 +64,9 @@ class FHM():
                     self.heart_rate.push(heart_rate)
             else:
                 self.heart_rate.push(heart_rate)
+
+            # Display on LEDs
+            display(self.heart_rate.winMean())
 
             print("Heartrate: %0.1f bpm | Inst: %0.1f" % (self.heart_rate.winMean(), heart_rate))
             print("Std. dev: %0.1f bpm\n" % self.heart_rate.winStdDev())
@@ -156,6 +159,7 @@ class FHM():
 
 if __name__ == "__main__":
     print("Fetal Heart Rate Monitor v0.1")
+    initGPIO()
 
     if (PLOT):
         import matplotlib.pyplot as plt
