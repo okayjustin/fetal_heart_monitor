@@ -9,9 +9,9 @@ from helper_funcs import *
 import sys, os
 import subprocess
 
-SIMULATE = False
+SIMULATE = True
 SYSTEM_REC = True
-PLOT = False
+PLOT = True
 
 # Fetal heart monitor
 class FHM():
@@ -84,7 +84,7 @@ class FHM():
 #        print(sigpwr)
 
         # Determine number of peaks in signal power
-        peaks, peaks_idx = findpeaks(sigpwr, 0.15, pow(2,13)/nperseg)
+        peaks, peaks_idx = findpeaks(sigpwr, 0.15, pow(2,12)/nperseg)
 
         # Measure peak time distance
         self.beat_time_delta.clear()
@@ -103,14 +103,15 @@ class FHM():
 #        print("Processing time: %f" % (end-start))
 
         #Plot everything
-#        fig = plt.figure()
-#        ax1 = fig.add_subplot(111)
-#        ax1.plot(sigpwr)
-#        ax1.scatter(peaks_idx, peaks)
-#        plt.title('Signal Power vs. Time')
-#        plt.ylabel('Signal Power')
-#        plt.xlabel('Time [sec]')
-#        plt.show()
+        if (PLOT):
+            fig = plt.figure()
+            ax1 = fig.add_subplot(111)
+            ax1.plot(sigpwr)
+            ax1.scatter(peaks_idx, peaks)
+            plt.title('Signal Power vs. Time')
+            plt.ylabel('Signal Power')
+            plt.xlabel('Time [sec]')
+            plt.show()
 
         return heart_rate, stdDev
 
@@ -168,16 +169,18 @@ if __name__ == "__main__":
 
     if (SIMULATE):
         # Import audio data
-        wav_path = './temp.wav'
+        wav_path = './temp0.wav'
         print("Importing audio... "),
         sys.stdout.flush()
         audio_data = input_audio(wav_path)
         print("Done.")
 
-        # Pretend to stream data
-        for i in range(0, len(audio_data) / monitor.chunk):
-            audio_data_segment = audio_data[monitor.chunk * i:monitor.chunk * (i+1)-1]
-            monitor.assessHR(audio_data_segment)
+        monitor.assessHR(audio_data)
+
+#        # Pretend to stream data
+#        for i in range(0, len(audio_data) / monitor.chunk):
+#            audio_data_segment = audio_data[monitor.chunk * i:monitor.chunk * (i+1)-1]
+#            monitor.assessHR(audio_data_segment)
     elif (SYSTEM_REC):
         try:
             monitor.detectLoop()

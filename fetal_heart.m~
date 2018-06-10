@@ -4,11 +4,11 @@ clc
 figure_num = 1;
 
 % Import audio file
-[Y, fsample] = audioread('temp0.wav');
+[Y, fsample] = audioread('temp1.wav');
 
 % Optimal FIR design ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 % Config parameters
-As = 120; % dB
+As = 18; % dB
 Ap = 0.5; % dB
 
 % Calculate passband ripple and stopband attenuation
@@ -16,12 +16,9 @@ delta_s = 10^(-As/20);
 delta_p = (10^(Ap/20)-1)/(10^(Ap/20)+1);
 
 % Parameters for optimal filter design
-% F = [2500 2700 3300 3500];
-% A = [0 1 0];
-% DEV = [delta_s delta_p delta_s];
-F = [1000 2000];
-A = [0 1];
-DEV = [delta_s delta_p];
+F = [2500 2700 3300 3500];
+A = [0 1 0];
+DEV = [delta_s delta_p delta_s];
 [N,Fo,Ao,W] = firpmord(F,A,DEV,fsample)
 N = N + 17; % Increase order a bit
 
